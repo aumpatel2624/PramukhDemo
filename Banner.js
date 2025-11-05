@@ -203,6 +203,10 @@ const Banner = () => {
       errors.buttonLink = "Button Link is required!";
     }
 
+    if (values.imageURL === "") {
+      errors.imageURL = "Image URL is required!";
+    }
+
     return errors;
   };
 
@@ -492,13 +496,17 @@ const Banner = () => {
             <div className="form-floating mb-3">
               <Input
                 type="text"
+                required
                 name="imageURL"
                 value={values.imageURL}
                 onChange={handleChange}
               />
               <Label>
-                Image URL
+                Image URL <span className="text-danger">*</span>
               </Label>
+              {isSubmit && (
+                <p className="text-danger">{formErrors.imageURL}</p>
+              )}
               {values.imageURL && (
                 <div className="mt-2">
                   <img
@@ -598,13 +606,17 @@ const Banner = () => {
             <div className="form-floating mb-3">
               <Input
                 type="text"
+                required
                 name="imageURL"
                 value={values.imageURL}
                 onChange={handleChange}
               />
               <Label>
-                Image URL
+                Image URL <span className="text-danger">*</span>
               </Label>
+              {isSubmit && (
+                <p className="text-danger">{formErrors.imageURL}</p>
+              )}
               {values.imageURL && (
                 <div className="mt-2">
                   <img

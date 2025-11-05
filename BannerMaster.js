@@ -16,7 +16,7 @@ const BannerMaster = new mongoose.Schema(
         },
         imageURL: {
             type: String,
-            required: false,
+            required: true,
         },
         isActive: {
             type: Boolean,
