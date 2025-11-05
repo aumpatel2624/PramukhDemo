@@ -17,6 +17,7 @@ import EmployeeRoles from "../pages/Setup/EmployeeRoles";
 import RoleMaster from "../pages/Master/RoleMaster";
 import CurrencyMaster from "../pages/Master/CurrencyMaster";
 import Banner from "../pages/Master/Banner";
+import Collection from "../pages/Master/Collection";
 
 const authProtectedRoutes = [
     { path: "/profile", component: <UserProfile /> },
@@ -36,6 +37,7 @@ const authProtectedRoutes = [
     { path: "/role-master", component: <RoleMaster /> },
     { path: "/currency-master", component: <CurrencyMaster /> },
     { path: "/banner-master", component: <Banner />},
+    { path: "/collection-master", component: <Collection />},
     {
         path: "/",
         exact: true,
