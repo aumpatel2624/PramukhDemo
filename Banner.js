@@ -30,6 +30,7 @@ const initialState = {
     title: "",
     buttontitle: "",
     buttonLink: "",
+    imageURL: "",
     isActive: false,
 };
 
@@ -83,6 +84,7 @@ const Banner = () => {
           title: res.data.data.title,
           buttontitle: res.data.data.buttontitle,
           buttonLink: res.data.data.buttonLink,
+          imageURL: res.data.data.imageURL || "",
           isActive: res.data.data.isActive,
         });
       })
@@ -303,6 +305,22 @@ const Banner = () => {
       minWidth: "150px",
     },
     {
+      name: "Image",
+      selector: (row) => {
+        return row.imageURL ? (
+          <img
+            src={row.imageURL}
+            alt={row.title}
+            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+            onError={(e) => { e.target.style.display = 'none' }}
+          />
+        ) : (
+          <span className="text-muted">No Image</span>
+        );
+      },
+      minWidth: "100px",
+    },
+    {
       name: "Status",
       selector: (row) => (row.isActive ? "Active" : "Inactive"),
       minWidth: "150px",
@@ -471,6 +489,27 @@ const Banner = () => {
                 <p className="text-danger">{formErrors.buttonLink}</p>
               )}
             </div>
+            <div className="form-floating mb-3">
+              <Input
+                type="text"
+                name="imageURL"
+                value={values.imageURL}
+                onChange={handleChange}
+              />
+              <Label>
+                Image URL
+              </Label>
+              {values.imageURL && (
+                <div className="mt-2">
+                  <img
+                    src={values.imageURL}
+                    alt="Banner Preview"
+                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain' }}
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+                </div>
+              )}
+            </div>
             <div className="mb-3">
               <Input
                 type="checkbox"
@@ -554,6 +593,27 @@ const Banner = () => {
               </Label>
               {isSubmit && (
                 <p className="text-danger">{formErrors.buttonLink}</p>
+              )}
+            </div>
+            <div className="form-floating mb-3">
+              <Input
+                type="text"
+                name="imageURL"
+                value={values.imageURL}
+                onChange={handleChange}
+              />
+              <Label>
+                Image URL
+              </Label>
+              {values.imageURL && (
+                <div className="mt-2">
+                  <img
+                    src={values.imageURL}
+                    alt="Banner Preview"
+                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain' }}
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+                </div>
               )}
             </div>
             <div className="mb-3">

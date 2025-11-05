@@ -2,13 +2,14 @@ const BannerMaster = require("../models/BannerMaster");
 
 exports.createBanner = async (req, res) => {
     try {
-        const { title, buttontitle, buttonLink, isActive } = req.body;
+        const { title, buttontitle, buttonLink, imageURL, isActive } = req.body;
         console.log("Creating banner:", req.body);
 
         const banner = await BannerMaster.create({
             title,
             buttontitle,
             buttonLink,
+            imageURL,
             isActive
         });
 
@@ -70,7 +71,7 @@ exports.getBannerById = async (req, res) => {
 exports.updateBanner = async (req, res) => {
     try {
         const { bannerId } = req.params;
-        const { title, buttontitle, buttonLink, isActive } = req.body;
+        const { title, buttontitle, buttonLink, imageURL, isActive } = req.body;
         console.log("Updating banner:", req.body);
 
         const banner = await BannerMaster.findByIdAndUpdate(
@@ -79,6 +80,7 @@ exports.updateBanner = async (req, res) => {
                 title,
                 buttontitle,
                 buttonLink,
+                imageURL,
                 isActive
             },
             { new: true }
