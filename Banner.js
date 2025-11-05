@@ -30,6 +30,7 @@ const initialState = {
     title: "",
     buttontitle: "",
     buttonLink: "",
+    imageURL: "",
     isActive: false,
 };
 
@@ -83,6 +84,7 @@ const Banner = () => {
           title: res.data.data.title,
           buttontitle: res.data.data.buttontitle,
           buttonLink: res.data.data.buttonLink,
+          imageURL: res.data.data.imageURL,
           isActive: res.data.data.isActive,
         });
       })
@@ -199,6 +201,10 @@ const Banner = () => {
 
     if (values.buttonLink === "") {
       errors.buttonLink = "Button Link is required!";
+    }
+
+    if (values.imageURL === "") {
+      errors.imageURL = "Image URL is required!";
     }
 
     return errors;
@@ -471,6 +477,21 @@ const Banner = () => {
                 <p className="text-danger">{formErrors.buttonLink}</p>
               )}
             </div>
+            <div className="form-floating mb-3">
+              <Input
+                type="text"
+                required
+                name="imageURL"
+                value={values.imageURL}
+                onChange={handleChange}
+              />
+              <Label>
+                Image URL <span className="text-danger">*</span>
+              </Label>
+              {isSubmit && (
+                <p className="text-danger">{formErrors.imageURL}</p>
+              )}
+            </div>
             <div className="mb-3">
               <Input
                 type="checkbox"
@@ -554,6 +575,21 @@ const Banner = () => {
               </Label>
               {isSubmit && (
                 <p className="text-danger">{formErrors.buttonLink}</p>
+              )}
+            </div>
+            <div className="form-floating mb-3">
+              <Input
+                type="text"
+                required
+                name="imageURL"
+                value={values.imageURL}
+                onChange={handleChange}
+              />
+              <Label>
+                Image URL <span className="text-danger">*</span>
+              </Label>
+              {isSubmit && (
+                <p className="text-danger">{formErrors.imageURL}</p>
               )}
             </div>
             <div className="mb-3">
