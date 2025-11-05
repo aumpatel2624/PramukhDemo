@@ -43,8 +43,11 @@ const Banner = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [banners, setBanners] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const [query, setQuery] = useState("");
 
@@ -61,6 +64,8 @@ const Banner = () => {
   const tog_list = () => {
     setmodal_list(!modal_list);
     setValues(initialState);
+    setSelectedFile(null);
+    setImagePreview(null);
     setIsSubmit(false);
   };
 
@@ -75,6 +80,8 @@ const Banner = () => {
   const handleTog_edit = (_id) => {
     setmodal_edit(!modal_edit);
     setIsSubmit(false);
+    setSelectedFile(null);
+    setImagePreview(null);
     set_Id(_id);
     setIsLoading(true);
     getBannerById(_id)
@@ -87,6 +94,10 @@ const Banner = () => {
           imageURL: res.data.data.imageURL || "",
           isActive: res.data.data.isActive,
         });
+        // Set preview to existing image
+        if (res.data.data.imageURL) {
+          setImagePreview(res.data.data.imageURL);
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -103,39 +114,113 @@ const Banner = () => {
     setValues({ ...values, [e.target.name]: e.target.checked });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Only image files (JPEG, PNG, GIF, WEBP) are allowed!");
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size should not exceed 5MB!");
+        return;
+      }
+
+      setSelectedFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setIsUploading(true);
+      const response = await axios.post("/api/auth/upload/image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.data.isOk) {
+        return response.data.data.url;
+      } else {
+        throw new Error(response.data.message || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image!");
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmitCancel = () => {
     setmodal_list(false);
     setValues(initialState);
+    setSelectedFile(null);
+    setImagePreview(null);
     setIsSubmit(false);
   };
 
-  const handleClick = (e) => {
+  const handleClick = async (e) => {
     e.preventDefault();
     setFormErrors({});
+
+    // Check if file is selected
+    if (!selectedFile && !values.imageURL) {
+      setFormErrors({ imageURL: "Image is required!" });
+      setIsSubmit(true);
+      return;
+    }
+
     let errors = validate(values);
     setFormErrors(errors);
     setIsSubmit(true);
-    const dataToSend = {
-        ...values,
-    }
-    if (
-      Object.keys(errors).length === 0
-    ) {
+
+    if (Object.keys(errors).length === 0) {
+      try {
         setIsLoading(true);
-        createBanner(dataToSend)
-        .then((res) => {
-          if (res.data.isOk) {
-            toast.success("Banner Added Successfully!");
-            setmodal_list(!modal_list);
-            setValues(initialState);
-            fetchBanners();
-          }
-        })
-        .catch((error) => {
-          console.log("Error creating banner:", error);
-        }).finally(() => {
-          setIsLoading(false);
-        });
+
+        // Upload image if a new file is selected
+        let imageURL = values.imageURL;
+        if (selectedFile) {
+          imageURL = await uploadImage(selectedFile);
+        }
+
+        const dataToSend = {
+          ...values,
+          imageURL: imageURL,
+        };
+
+        const res = await createBanner(dataToSend);
+        if (res.data.isOk) {
+          toast.success("Banner Added Successfully!");
+          setmodal_list(!modal_list);
+          setValues(initialState);
+          setSelectedFile(null);
+          setImagePreview(null);
+          fetchBanners();
+        }
+      } catch (error) {
+        console.log("Error creating banner:", error);
+        toast.error("Failed to create banner!");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -164,27 +249,51 @@ const Banner = () => {
     setmodal_edit(false);
     setIsSubmit(false);
     setFormErrors({});
+    setSelectedFile(null);
+    setImagePreview(null);
   };
 
-  const handleUpdate = (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    let erros = validate(values);
-    setFormErrors(erros);
+
+    // Check if file is selected or image exists
+    if (!selectedFile && !values.imageURL) {
+      setFormErrors({ imageURL: "Image is required!" });
+      setIsSubmit(true);
+      return;
+    }
+
+    let errors = validate(values);
+    setFormErrors(errors);
     setIsSubmit(true);
 
-    if (Object.keys(erros).length === 0) {
-      setIsLoading(true);
-      updateBanner(_id, values)
-        .then((res) => {
-          setmodal_edit(!modal_edit);
-          fetchBanners();
-          toast.success("Banner Updated Successfully!");
-        })
-        .catch((err) => {
-          console.log(err);
-        }).finally(() => {
-          setIsLoading(false);
-        });
+    if (Object.keys(errors).length === 0) {
+      try {
+        setIsLoading(true);
+
+        // Upload image if a new file is selected
+        let imageURL = values.imageURL;
+        if (selectedFile) {
+          imageURL = await uploadImage(selectedFile);
+        }
+
+        const dataToSend = {
+          ...values,
+          imageURL: imageURL,
+        };
+
+        const res = await updateBanner(_id, dataToSend);
+        setmodal_edit(!modal_edit);
+        fetchBanners();
+        setSelectedFile(null);
+        setImagePreview(null);
+        toast.success("Banner Updated Successfully!");
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to update banner!");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -201,10 +310,6 @@ const Banner = () => {
 
     if (values.buttonLink === "") {
       errors.buttonLink = "Button Link is required!";
-    }
-
-    if (values.imageURL === "") {
-      errors.imageURL = "Image URL is required!";
     }
 
     return errors;
@@ -493,28 +598,31 @@ const Banner = () => {
                 <p className="text-danger">{formErrors.buttonLink}</p>
               )}
             </div>
-            <div className="form-floating mb-3">
-              <Input
-                type="text"
-                required
-                name="imageURL"
-                value={values.imageURL}
-                onChange={handleChange}
-              />
+            <div className="mb-3">
               <Label>
-                Image URL <span className="text-danger">*</span>
+                Image <span className="text-danger">*</span>
               </Label>
-              {isSubmit && (
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {isSubmit && formErrors.imageURL && (
                 <p className="text-danger">{formErrors.imageURL}</p>
               )}
-              {values.imageURL && (
+              {imagePreview && (
                 <div className="mt-2">
                   <img
-                    src={values.imageURL}
+                    src={imagePreview}
                     alt="Banner Preview"
-                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain' }}
-                    onError={(e) => { e.target.style.display = 'none' }}
+                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}
                   />
+                </div>
+              )}
+              {isUploading && (
+                <div className="mt-2">
+                  <span className="text-info">Uploading image...</span>
                 </div>
               )}
             </div>
@@ -603,28 +711,31 @@ const Banner = () => {
                 <p className="text-danger">{formErrors.buttonLink}</p>
               )}
             </div>
-            <div className="form-floating mb-3">
-              <Input
-                type="text"
-                required
-                name="imageURL"
-                value={values.imageURL}
-                onChange={handleChange}
-              />
+            <div className="mb-3">
               <Label>
-                Image URL <span className="text-danger">*</span>
+                Image <span className="text-danger">*</span>
               </Label>
-              {isSubmit && (
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {isSubmit && formErrors.imageURL && (
                 <p className="text-danger">{formErrors.imageURL}</p>
               )}
-              {values.imageURL && (
+              {imagePreview && (
                 <div className="mt-2">
                   <img
-                    src={values.imageURL}
+                    src={imagePreview}
                     alt="Banner Preview"
-                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain' }}
-                    onError={(e) => { e.target.style.display = 'none' }}
+                    style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'contain', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}
                   />
+                </div>
+              )}
+              {isUploading && (
+                <div className="mt-2">
+                  <span className="text-info">Uploading image...</span>
                 </div>
               )}
             </div>
