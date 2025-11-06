@@ -26,6 +26,21 @@ const CMSMasterSchema = new Schema({
         trim: true,
         lowercase: true
     },
+    // SEO Fields
+    metaTitle: {
+        type: String,
+        required: false,
+        maxlength: 60
+    },
+    metaDescription: {
+        type: String,
+        required: false,
+        maxlength: 160
+    },
+    metaKeywords: {
+        type: [String],
+        default: []
+    },
     isActive: {
         type: Boolean,
         default: true
